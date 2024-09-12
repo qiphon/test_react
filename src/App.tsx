@@ -50,15 +50,41 @@ const useDebounce = (fn: AnyFn, time: number) => {
   return debounce(fn, time);
 };
 
+/** bitget  */
+const useDebounceValue = <T,>(value: T, duration = 1000): T | null => {
+  const newVal = useRef<T | null>(null);
+  const timeout = useRef<number | null>(null);
+
+  useEffect(() => {
+    // 不需要在这里再次 clear timeout
+    // console.log(timeout.current, "timeout useDebounceValue");
+    timeout.current = setTimeout(() => {
+      newVal.current = value;
+    }, duration);
+
+    return () => {
+      // console.log("destroy useDebounceValue timeout ");
+      if (timeout.current) {
+        clearTimeout(timeout.current);
+        timeout.current = null;
+      }
+    };
+  }, [value, duration]);
+
+  return newVal.current;
+};
+
 function App() {
   const [count, setCount] = useState(0);
   const [waitTime, setWaitTime] = useState(1000);
   const preCount = usePrevious(count);
   const preCount2 = usePrevious2(count);
+
+  const debounceVal = useDebounceValue(count);
+
   return (
     <>
       <h1>
-        {" "}
         部分面试手写题 <small>usePrevious/useDebounce</small>
       </h1>
       <h2
@@ -76,11 +102,22 @@ function App() {
         update count no debounce {count}, update 2 / time . pre value is{" "}
         {preCount} -- {preCount2}
       </button>
+      <div>useDebounceValue is {debounceVal}</div>
       <div className="card">
         <button
-          onClick={useDebounce(() => setCount((count) => count + 1), waitTime)}
+          onClick={useDebounce(() => {
+            // setCount((count) => count + 1)
+            setCount(count + 1);
+          }, waitTime)}
         >
           count is {count}
+        </button>
+        <button
+          onClick={() => {
+            setCount(count + 1);
+          }}
+        >
+          set value without debounce
         </button>
       </div>
     </>
